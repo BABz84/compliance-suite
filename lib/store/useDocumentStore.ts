@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { UIStatus } from './useUIState';
+import { documentsApi, ApiResponse } from '../api-client';
 
 // Document type definitions based on PRD
 export type DocumentType = 'regulation' | 'contract' | 'policy' | 'control' | 'disclosure';
@@ -16,6 +17,11 @@ export interface Document {
   fileUrl: string;
   size: number;
   contentType: string;
+  uploadedBy?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 // Document store state interface
@@ -45,6 +51,14 @@ interface DocumentState {
   setSearchQuery: (query: string) => void;
   setDocumentTypeFilter: (type: DocumentType | 'all') => void;
   setJurisdictionFilter: (jurisdiction: Jurisdiction | 'all') => void;
+  
+  // API actions
+  fetchDocuments: (type?: DocumentType) => Promise<void>;
+  fetchDocumentById: (id: string) => Promise<Document | null>;
+  createDocument: (documentData: Partial<Document>) => Promise<Document | null>;
+  updateDocument: (id: string, updateData: Partial<Document>) => Promise<Document | null>;
+  deleteDocument: (id: string) => Promise<boolean>;
+  processDocument: (id: string) => Promise<boolean>;
   
   // Filter helper
   applyFilters: () => void;
@@ -130,6 +144,203 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   setJurisdictionFilter: (jurisdiction) => {
     set({ jurisdictionFilter: jurisdiction });
     get().applyFilters();
+  },
+  
+  // API actions implementation
+  fetchDocuments: async (type) => {
+    try {
+      set({ uploadStatus: 'loading' });
+      const response = await documentsApi.getAll(type) as ApiResponse<{ documents: Document[] }>;
+      
+      if (!response.success || !response.data?.documents) {
+        set({ 
+          uploadStatus: 'error', 
+          uploadError: response.message || 'Failed to fetch documents' 
+        });
+        return;
+      }
+      
+      // Convert date strings to Date objects
+      const documents = response.data.documents.map(doc => ({
+        ...doc,
+        uploadDate: new Date(doc.uploadDate)
+      }));
+      
+      set({ 
+        documents,
+        uploadStatus: 'success'
+      });
+      
+      get().applyFilters();
+    } catch (error) {
+      set({
+        uploadStatus: 'error',
+        uploadError: error instanceof Error ? error.message : 'Error fetching documents'
+      });
+    }
+  },
+  
+  fetchDocumentById: async (id) => {
+    try {
+      set({ uploadStatus: 'loading' });
+      const response = await documentsApi.getById(id) as ApiResponse<{ document: Document }>;
+      
+      if (!response.success || !response.data?.document) {
+        set({ 
+          uploadStatus: 'error', 
+          uploadError: response.message || 'Failed to fetch document' 
+        });
+        return null;
+      }
+      
+      // Convert date strings to Date objects
+      const document = {
+        ...response.data.document,
+        uploadDate: new Date(response.data.document.uploadDate)
+      };
+      
+      set({ uploadStatus: 'success' });
+      return document;
+    } catch (error) {
+      set({
+        uploadStatus: 'error',
+        uploadError: error instanceof Error ? error.message : 'Error fetching document'
+      });
+      return null;
+    }
+  },
+  
+  createDocument: async (documentData) => {
+    try {
+      set({ uploadStatus: 'loading' });
+      const response = await documentsApi.create(documentData) as ApiResponse<{ document: Document }>;
+      
+      if (!response.success || !response.data?.document) {
+        set({ 
+          uploadStatus: 'error', 
+          uploadError: response.message || 'Failed to create document' 
+        });
+        return null;
+      }
+      
+      // Convert date strings to Date objects
+      const document = {
+        ...response.data.document,
+        uploadDate: new Date(response.data.document.uploadDate)
+      };
+      
+      // Add the new document to the state
+      get().addDocument(document);
+      
+      set({ uploadStatus: 'success' });
+      return document;
+    } catch (error) {
+      set({
+        uploadStatus: 'error',
+        uploadError: error instanceof Error ? error.message : 'Error creating document'
+      });
+      return null;
+    }
+  },
+  
+  updateDocument: async (id, updateData) => {
+    try {
+      set({ uploadStatus: 'loading' });
+      const response = await documentsApi.update(id, updateData) as ApiResponse<{ document: Document }>;
+      
+      if (!response.success || !response.data?.document) {
+        set({ 
+          uploadStatus: 'error', 
+          uploadError: response.message || 'Failed to update document' 
+        });
+        return null;
+      }
+      
+      // Convert date strings to Date objects
+      const document = {
+        ...response.data.document,
+        uploadDate: new Date(response.data.document.uploadDate)
+      };
+      
+      // Update document in state
+      const updatedDocuments = get().documents.map(doc => 
+        doc.id === id ? document : doc
+      );
+      
+      set({ 
+        documents: updatedDocuments,
+        uploadStatus: 'success'
+      });
+      
+      get().applyFilters();
+      
+      return document;
+    } catch (error) {
+      set({
+        uploadStatus: 'error',
+        uploadError: error instanceof Error ? error.message : 'Error updating document'
+      });
+      return null;
+    }
+  },
+  
+  deleteDocument: async (id) => {
+    try {
+      set({ uploadStatus: 'loading' });
+      const response = await documentsApi.delete(id) as ApiResponse<{ success: boolean }>;
+      
+      if (!response.success) {
+        set({ 
+          uploadStatus: 'error', 
+          uploadError: response.message || 'Failed to delete document' 
+        });
+        return false;
+      }
+      
+      // Remove document from state
+      get().removeDocument(id);
+      
+      set({ uploadStatus: 'success' });
+      return true;
+    } catch (error) {
+      set({
+        uploadStatus: 'error',
+        uploadError: error instanceof Error ? error.message : 'Error deleting document'
+      });
+      return false;
+    }
+  },
+  
+  processDocument: async (id) => {
+    try {
+      set({ processingStatus: 'loading' });
+      const response = await documentsApi.process(id) as ApiResponse<{ success: boolean }>;
+      
+      if (!response.success) {
+        set({ processingStatus: 'error' });
+        return false;
+      }
+      
+      // Update the document processing status in state
+      const updatedDocuments = get().documents.map(doc => {
+        if (doc.id === id) {
+          return { ...doc, processingStatus: 'processing' as const };
+        }
+        return doc;
+      });
+      
+      set({ 
+        documents: updatedDocuments,
+        processingStatus: 'success' 
+      });
+      
+      get().applyFilters();
+      
+      return true;
+    } catch (error) {
+      set({ processingStatus: 'error' });
+      return false;
+    }
   },
   
   // Filter helper implementation
