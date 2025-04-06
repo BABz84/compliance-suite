@@ -638,4 +638,4 @@ function ContractReviewPage() {
 }
 
 // Export with state management HOC
-export default withStateManagement(ContractReviewPage) 
+export default withStateManagement(ContractReviewPage);

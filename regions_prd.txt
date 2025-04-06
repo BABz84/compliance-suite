@@ -1,0 +1,213 @@
+# Overview
+
+**Product:** Gen-AI Compliance Suite (V1.0 Demo)
+
+**Problem:** Financial institutions like Regions Bank face significant operational burdens and risks managing complex, ever-changing regulatory requirements. Manual processes for tasks like regulatory research, contract review, policy alignment, and gap identification are inefficient, costly, and prone to human error.
+
+**Target Audience (Initial):** Compliance teams within Regions Bank (Analysts, SMEs, Managers).
+
+**Value Proposition:** This software leverages Generative AI (specifically, models accessed via API like Anthropic's Claude 3 Sonnet) to automate and assist with critical compliance tasks. It aims to dramatically increase efficiency, improve accuracy, reduce manual effort, and provide better oversight, ultimately strengthening the bank's compliance posture and mitigating risk. This demo serves to showcase these capabilities fully.
+
+---
+
+# Core Features
+
+*(This describes the full feature set required for the V1.0 Demo)*
+
+1.  **F1: User Authentication & Authorization**
+    *   *What it does:* Securely manages user login and controls access based on roles (Analyst, SME, Manager/Admin).
+    *   *Why it's important:* Protects access to the system and potentially sensitive (sample) data; ensures users only see relevant functions.
+    *   *How it works:* Standard secure login (username/password), session management, backend RBAC checks for API routes/actions.
+2.  **F2: Document Management (Demo Data)**
+    *   *What it does:* Allows uploading, tagging (jurisdiction, type, etc.), searching, and managing the sample documents (regulations, contracts, policies) used within the demo. Includes backend processing (parsing, chunking, embedding) for AI use.
+    *   *Why it's important:* Provides the necessary knowledge base (corpus) for the AI features to operate upon within the demo context. Tagging enables filtering and context-specific operations.
+    *   *How it works:* UI for upload/tagging/search -> Backend API saves metadata to DB (Cloud SQL) and document content to Cloud Storage -> Asynchronous worker processes documents for AI readiness.
+3.  **F3: Regulatory Q&A**
+    *   *What it does:* Allows users to ask natural language questions about the regulations in the demo corpus and receive AI-generated answers.
+    *   *Why it's important:* Demonstrates rapid information retrieval and understanding of regulatory text.
+    *   *How it works:* User inputs question via UI -> Backend API formats prompt with context (retrieved from processed docs based on question/tags) -> Calls external AI API (Claude 3 Sonnet) -> Displays formatted answer with source citations (where possible) and "AI-Generated" label. Requires SME Validation (F11).
+4.  **F4: Regulatory Summarization**
+    *   *What it does:* Generates concise summaries of selected regulatory documents or pasted text from the demo corpus.
+    *   *Why it's important:* Showcases AI's ability to distill complex information quickly.
+    *   *How it works:* User selects doc/pastes text -> Backend API sends text to AI API for summarization -> Displays summary labeled "AI-Generated". Requires SME Validation (F11).
+5.  **F5: Jurisdictional Comparison**
+    *   *What it does:* Compares regulations on a specific topic across different jurisdictions (based on tagged demo documents).
+    *   *Why it's important:* Addresses a key challenge for institutions operating in multiple locations.
+    *   *How it works:* User selects jurisdictions/topic -> Backend API retrieves relevant document sections -> Sends context to AI API for comparison -> Displays results (e.g., table) highlighting similarities/differences, labeled "AI-Generated". Requires SME Validation (F11).
+6.  **F6: Contract / Disclosure Review Assistance**
+    *   *What it does:* Analyzes sample contract/disclosure documents against specified demo regulations or risk areas, flagging potential issues.
+    *   *Why it's important:* Demonstrates AI assistance in a time-consuming, critical review process.
+    *   *How it works:* User uploads/selects sample contract & relevant regs -> Backend API sends content to AI API -> AI identifies potential risks/gaps based on context -> Displays findings (e.g., annotations, list), labeled "AI-Generated". Requires SME Validation (F11).
+7.  **F7: Policy / Procedure Drafting Assistance**
+    *   *What it does:* Generates initial *drafts* of policies or procedures based on selected demo regulations and user prompts.
+    *   *Why it's important:* Accelerates the creation of internal documentation while ensuring regulatory grounding.
+    *   *How it works:* User specifies policy type/context -> Backend API sends prompt + regulatory context to AI API -> Displays editable draft labeled "AI-Generated Draft". Requires significant SME refinement and validation (F11).
+8.  **F8: Control Design Assistance**
+    *   *What it does:* Suggests potential control mechanisms based on sample risk findings, audit results, or regulations provided as context.
+    *   *Why it's important:* Aids in developing effective controls aligned with risks and requirements.
+    *   *How it works:* User provides context -> Backend API sends context to AI API -> Displays suggestions labeled "AI-Generated". Requires SME Validation (F11).
+9.  **F9: Reporting & Visualization (Demo Level)**
+    *   *What it does:* Provides a simple dashboard and basic reports summarizing activities and statuses within the demo environment (e.g., documents processed, reviews pending using sample data).
+    *   *Why it's important:* Demonstrates oversight capabilities for compliance managers.
+    *   *How it works:* Backend aggregates data from interaction logs and feedback tables -> Displays key metrics/statuses on UI dashboard/reports.
+10. **F10: Policy / Control Alignment & Gap Detection**
+    *   *What it does:* Cross-references sample internal policies/controls against selected sample regulations to identify alignment points and discrepancies.
+    *   *Why it's important:* Directly addresses the need to ensure internal practices match external requirements.
+    *   *How it works:* User selects internal/external docs -> Backend API sends relevant text to AI API for analysis -> Displays findings, labeled "AI-Generated". Requires SME Validation (F11).
+11. **F11: SME Feedback & Validation Workflow (Integrated)**
+    *   *What it does:* Allows Subject Matter Experts (SMEs) to review, rate (Accurate, Inaccurate, Needs Review), comment on, and potentially correct AI-generated outputs across features F3-F8 & F10. Tracks review status.
+    *   *Why it's important:* Critical risk mitigation; ensures human oversight and accuracy ("human-in-the-loop"). Demonstrates control over AI usage.
+    *   *How it works:* UI controls attached to AI outputs -> Submits feedback to Backend API -> Stores feedback linked to the original interaction in DB -> Updates review status displayed in UI/dashboard.
+12. **F12: Audit Logging (Demo Level)**
+    *   *What it does:* Logs key user actions, AI interactions, and feedback events within the demo.
+    *   *Why it's important:* Demonstrates traceability and accountability.
+    *   *How it works:* Backend middleware or explicit calls log events to a dedicated DB table or logging service.
+
+---
+
+# User Experience
+
+*   **User Personas:**
+    *   **Compliance Analyst ("Chris"):** Focuses on research, drafting, initial reviews using the tool's full capabilities. Needs efficiency and clarity.
+    *   **Subject Matter Expert / Compliance Lead ("Linda"):** Focuses on validation across all AI outputs. Needs reliable review tools and feedback mechanisms.
+    *   **Compliance Manager / Oversight ("Maria"):** Focuses on monitoring activities via dashboards and reports. Needs visibility and audit trails.
+*   **Key User Flows (Examples):**
+    *   *Regulatory Question:* Analyst logs in -> Navigates to Q&A -> Types question -> Selects relevant regulations (optional) -> Receives AI answer -> Analyst reviews answer -> SME logs in -> Finds Q&A interaction needing review -> Rates/comments on the answer.
+    *   *Contract Review:* Analyst logs in -> Uploads sample contract -> Selects relevant regulations -> Initiates AI review -> Reviews flagged risks -> SME reviews AI findings -> Validates/corrects findings.
+    *   *Policy Draft:* Analyst logs in -> Navigates to Policy Drafting -> Selects regulations -> Prompts AI for draft -> Reviews/edits draft -> Submits for SME review -> SME reviews/validates/edits draft.
+*   **UI/UX Considerations:**
+    *   **Technology:** Built with Next.js, React, Shadcn UI, Tailwind CSS (via v0.dev scaffolding).
+    *   **Design:** Clean, professional, intuitive interface suitable for enterprise users. Minimize clutter.
+    *   **Clarity:** *Crucial:* Clearly label all AI-generated content. Visually distinguish AI suggestions from validated facts or user inputs. Clearly display review status (Pending, Reviewed-Accurate, Reviewed-Inaccurate).
+    *   **Feedback:** Provide visual feedback during processing (loading indicators for AI calls). User-friendly error messages.
+    *   **Efficiency:** Optimize workflows for core tasks. Minimize clicks where possible.
+
+---
+
+# Technical Architecture
+
+*   **System Components:**
+    *   **Frontend:** Next.js Single Page Application (SPA) using React/Shadcn/Tailwind. Hosted potentially via GCP Cloud Run or dedicated frontend hosting.
+    *   **Backend:** Next.js API Routes/Server Logic (TypeScript). Deployed likely as a container on GCP Cloud Run. Organized as a Well-Structured Monolith with strong internal modularity.
+    *   **Database:** Managed PostgreSQL instance on Google Cloud SQL.
+    *   **File Storage:** Google Cloud Storage (GCS) for storing uploaded sample documents.
+    *   **AI Integration:** API calls to external service (Anthropic Claude 3 Sonnet provisionally). Managed via backend logic.
+    *   **Task Queue:** Google Cloud Tasks triggering Google Cloud Functions for asynchronous processing (document parsing, embedding, complex AI analysis).
+    *   **Infrastructure:** Google Cloud Platform (GCP).
+*   **Data Models (Conceptual):**
+    *   `Users` (ID, Auth details, Role)
+    *   `Documents` (ID, Metadata, Tags, Storage URI, Processing Status)
+    *   `AiInteractions` (ID, Type, User, Input, Output, Status, Link to Feedback)
+    *   `FormattedOutputs` (ID, Interaction ID, Type, Content)
+    *   `SmeFeedback` (ID, Interaction ID, SME User, Rating, Comment, Timestamp)
+    *   `AuditLog` (ID, Timestamp, User, Action, Details)
+    *   *(Schema to be detailed further during development)*
+*   **APIs and Integrations:**
+    *   **Internal:** RESTful or GraphQL APIs exposed by Next.js backend for frontend consumption.
+    *   **External:** HTTPS API calls to Anthropic (or chosen provider) for Gen-AI capabilities. Requires secure API key management (GCP Secret Manager).
+*   **Infrastructure Requirements (GCP):**
+    *   Cloud Run (for Next.js app container)
+    *   Cloud SQL (PostgreSQL instance)
+    *   Cloud Storage (Bucket for documents)
+    *   Cloud Tasks & Cloud Functions (for async jobs)
+    *   Secret Manager (for API keys, secrets)
+    *   Cloud Build (for CI/CD)
+    *   Identity Platform/IAM (for user auth/roles if not fully custom)
+    *   Cloud Logging & Monitoring (basic setup)
+
+---
+
+# Development Roadmap
+
+*(Focus is on scope and phasing for the V1.0 Demo build; no timelines)*
+
+*   **Phase 1: Foundation & Core Interaction**
+    *   *Scope:*
+        *   Basic GCP Infrastructure Setup (Cloud Run, Cloud SQL, GCS, Secret Manager).
+        *   Next.js project setup (Monolith structure, basic layout).
+        *   User Authentication & Authorization (F1).
+        *   Document Management Backend (upload, storage, basic processing - F2 backend).
+        *   Basic Document Management UI (upload, list - F2 frontend).
+        *   Regulatory Q&A (F3 - core AI call and display, no feedback yet).
+        *   Regulatory Summarization (F4 - core AI call and display, no feedback yet).
+        *   Basic Audit Logging (F12 foundation).
+    *   *Goal:* Get a minimal version running where users can log in, upload a doc, ask a question about it, and get a summary. Establishes core architecture and AI integration.
+*   **Phase 2: Expanding AI Capabilities & Feedback**
+    *   *Scope:*
+        *   SME Feedback & Validation Workflow (F11 - UI controls, backend storage, status tracking). Integrate with F3/F4.
+        *   Jurisdictional Comparison (F5 - requires document tagging in F2). Integrate feedback.
+        *   Contract / Disclosure Review Assistance (F6 - requires contract document type handling). Integrate feedback.
+        *   Policy / Control Alignment & Gap Detection (F10 - requires policy/control doc types). Integrate feedback.
+        *   Enhanced Document Management (Tagging UI, Search/Filter - F2 enhancements).
+    *   *Goal:* Implement the bulk of the AI-driven analysis features and the critical SME validation loop.
+*   **Phase 3: Drafting, Reporting & Polish**
+    *   *Scope:*
+        *   Policy / Procedure Drafting Assistance (F7). Integrate feedback.
+        *   Control Design Assistance (F8). Integrate feedback.
+        *   Reporting & Visualization (F9 - Dashboard, basic reports based on logged data).
+        *   UI/UX Polish across all features based on internal review.
+        *   Refine error handling and user guidance.
+        *   Finalize Audit Logging (F12 coverage).
+    *   *Goal:* Complete all functional requirements, add oversight features, and ensure a polished presentation suitable for demonstration.
+*   **Future Enhancements (Post-Demo / Post-Contract):**
+    *   On-premises deployment considerations (significant rework).
+    *   Production-grade security hardening, pen testing.
+    *   Scalability optimization for high load/volume.
+    *   HA/DR implementation.
+    *   Deeper integrations (Client systems, GRC tools).
+    *   Advanced analytics, trend analysis.
+    *   Automated model refinement based on feedback.
+    *   Comprehensive test automation suite.
+
+---
+
+# Logical Dependency Chain
+
+1.  **Infrastructure & Auth:** GCP setup, Next.js project, User Auth (F1) - *Foundation, needed for anything else.*
+2.  **Document Handling:** Basic Document Upload/Storage/Processing (F2 Backend) - *Needed for AI context.*
+3.  **Core AI Interaction (Visible):** Q&A (F3) and/or Summarization (F4) - *Quickest path to demonstrating core AI value with a basic UI.* Display Document List (F2 Frontend).
+4.  **Feedback Mechanism:** SME Validation Workflow (F11) - *Critical risk mitigation, should be integrated early after initial AI features work.* Apply to F3/F4.
+5.  **Advanced Document Features:** Enhanced Doc Mgmt (Tagging/Search F2) - *Unlocks context for more complex AI features.*
+6.  **Analysis Features (Can be Parallelized somewhat):** Jurisdictional Comparison (F5), Contract Review (F6), Alignment/Gap Detection (F10) - *Build upon docs and feedback.* Integrate F11.
+7.  **Drafting Features:** Policy Drafting (F7), Control Design (F8) - *Build upon docs and feedback.* Integrate F11.
+8.  **Oversight & Polish:** Reporting (F9), Audit Logging completion (F12), UI/UX Polish - *Final layer for demo readiness.*
+
+*   *Pacing:* Each numbered item represents a logical block. Features within blocks (like 6 & 7) can potentially be developed in parallel streams once dependencies (like F2/F11) are met. Aim for atomic commits/PRs related to specific sub-features.
+
+---
+
+# Risks and Mitigations
+
+*   **Technical Challenges:**
+    *   *Risk:* Integrating multiple AI features with consistent quality and managing complex prompts/context for Claude 3 Sonnet. Handling diverse document parsing reliably.
+    *   *Mitigation:* Start with simpler features (Q&A, Summary) to establish patterns. Use robust parsing libraries. Leverage Cursor.ai effectively but review generated code rigorously. Implement strong error handling around AI API calls. Modular code structure.
+*   **Figuring out the MVP that we can build upon:**
+    *   *Risk:* Scope creep within the V1.0 Demo build, delaying a presentable version.
+    *   *Mitigation:* Adhere strictly to the phased roadmap above. Phase 1 represents the core foundational "MVP" *within the demo context*. Focus on getting these foundational elements working robustly first before expanding to all features required for the full demo.
+*   **Resource Constraints:**
+    *   *Risk:* Single resource handling CEO and all DevOps responsibilities creates a bottleneck and key person dependency. Development speed relies heavily on AI tooling effectiveness.
+    *   *Mitigation:* Maximize DevOps automation (Terraform, Cloud Build CI/CD). Rely heavily on GCP managed services. Maintain clear infrastructure documentation. Rigorously review AI-generated code to ensure quality despite accelerated pace. Acknowledge this constraint and prioritize ruthlessly based on the roadmap.
+*   **AI Model Risk (Misinformation/Hallucination):**
+    *   *Risk:* AI generating inaccurate or inappropriate content for compliance tasks. Over-reliance by users.
+    *   *Mitigation:* **CRITICAL:** Implement and enforce the SME Validation Workflow (F11) for all relevant outputs. Clearly label all AI-generated content. Use focused prompts with good context retrieved from the managed document corpus. Use high-quality sample data. Educate demo audience on the "human-in-the-loop" necessity.
+*   **Data Quality & Privacy (Demo Context):**
+    *   *Risk:* Using inappropriate data in the demo; ensuring AI provider adheres to data privacy terms.
+    *   *Mitigation:* Strictly use curated, non-sensitive sample data. Confirm and adhere to Anthropic's data usage policies (ensure demo data isn't used for training). Secure demo environment appropriately (NF1).
+*   **External API Dependency:**
+    *   *Risk:* Latency or downtime of the external AI API provider impacting the demo. Cost overruns.
+    *   *Mitigation:* Implement reasonable timeouts and error handling. Have backup demo talking points if API is slow/down. Monitor API usage costs during development. Choose cost-effective models like Claude 3 Sonnet or GPT-4o.
+
+---
+
+# Appendix
+
+*   **Source Document:** Initial Proposal document provided by Regions Bank contact (Basis for core features).
+*   **Key Technology Choices:**
+    *   Frontend/Backend: Next.js (TypeScript)
+    *   UI Scaffolding: v0.dev (React/Shadcn/Tailwind)
+    *   Development IDE: Cursor.ai (Gemini 1.5 Pro)
+    *   Cloud Provider: Google Cloud Platform (GCP)
+    *   AI Service API: Anthropic Claude 3 Sonnet (Tentative Primary)
+*   **(Add links to specific research, detailed technical specs, or API documentation as needed during development)**
+
+---
