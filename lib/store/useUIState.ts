@@ -22,15 +22,21 @@ interface UIState {
   startProcessing: () => void;
   setSuccess: (message?: string) => void;
   setFailed: (error: string) => void;
+  
+  // Event system for cross-component communication
+  events: Record<string, Date>;
+  triggerEvent: (eventName: string) => void;
+  getLastEventTime: (eventName: string) => Date | null;
 }
 
 // Create the store with type safety
-export const useUIState = create<UIState>((set) => ({
+export const useUIState = create<UIState>((set, get) => ({
   // Initial state
   status: 'idle',
   error: null,
   message: null,
   pageTitle: 'Dashboard',
+  events: {},
 
   // State mutation implementations
   setStatus: (status) => set({ status }),
@@ -52,4 +58,13 @@ export const useUIState = create<UIState>((set) => ({
     error: error || 'An error occurred', 
     message: null 
   }),
+  
+  // Event system implementation
+  triggerEvent: (eventName) => set(state => ({
+    events: {
+      ...state.events,
+      [eventName]: new Date()
+    }
+  })),
+  getLastEventTime: (eventName) => get().events[eventName] || null
 })); 

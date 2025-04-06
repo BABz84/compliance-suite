@@ -4,6 +4,8 @@ export * from './useAuthStore';
 export * from './useDocumentStore';
 export * from './useAiStore';
 export * from './withStateManagement';
+export * from './AppStateProvider';
+export * from './useStateSynchronizer';
 
 // Re-export common types
 export type { UIStatus } from './useUIState';
