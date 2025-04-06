@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String            @id @default(uuid())
+  email           String            @unique
+  name            String
+  role            String // analyst, sme, manager, admin
+  passwordHash    String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  lastLoginAt     DateTime?
+  documents       Document[]
+  aiInteractions  AIInteraction[]
+  reviews         AIInteraction[]   @relation("Reviewer")
+  feedbacks       Feedback[]
+}
+
+model Document {
+  id               String           @id @default(uuid())
+  name             String
+  type             String // regulation, contract, policy, control, disclosure
+  jurisdiction     String?
+  tags             String[]
+  uploadedById     String
+  uploadedBy       User             @relation(fields: [uploadedById], references: [id])
+  uploadDate       DateTime         @default(now())
+  processingStatus String // pending, processing, completed, failed
+  fileUrl          String
+  fileSize         Int
+  contentType      String
+  aiInteractions   AIInteraction[]
+  feedbacks        Feedback[]
+}
+
+model AIInteraction {
+  id                String          @id @default(uuid())
+  featureType       String // regulatory-qa, summarization, comparison, contract-review, etc.
+  prompt            String          @db.Text
+  response          String          @db.Text
+  context           Json?
+  userId            String
+  user              User            @relation(fields: [userId], references: [id])
+  documentId        String?
+  document          Document?       @relation(fields: [documentId], references: [id])
+  createdAt         DateTime        @default(now())
+  reviewStatus      String          @default("pending") // pending, accurate, inaccurate, needs-review
+  reviewerId        String?
+  reviewer          User?           @relation("Reviewer", fields: [reviewerId], references: [id])
+  reviewerFeedback  String?         @db.Text
+  reviewedAt        DateTime?
+  sourceCitations   String[]
+  feedbacks         Feedback[]
+}
+
+model Feedback {
+  id               String           @id @default(uuid())
+  content          String           @db.Text
+  rating           Int?  // 1-5 rating
+  feedbackType     String // general, document, interaction
+  documentId       String?
+  document         Document?        @relation(fields: [documentId], references: [id])
+  interactionId    String?
+  interaction      AIInteraction?   @relation(fields: [interactionId], references: [id])
+  userId           String
+  user             User             @relation(fields: [userId], references: [id])
+  createdAt        DateTime         @default(now())
+}
