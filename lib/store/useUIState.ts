@@ -8,11 +8,13 @@ interface UIState {
   status: UIStatus;
   error: string | null;
   message: string | null;
+  pageTitle: string;
 
   // State mutation actions
   setStatus: (status: UIStatus) => void;
   setError: (error: string | null) => void;
   setMessage: (message: string | null) => void;
+  setPageTitle: (title: string) => void;
   reset: () => void;
   
   // Convenience methods for common state transitions
@@ -28,11 +30,13 @@ export const useUIState = create<UIState>((set) => ({
   status: 'idle',
   error: null,
   message: null,
+  pageTitle: 'Dashboard',
 
   // State mutation implementations
   setStatus: (status) => set({ status }),
   setError: (error) => set({ error }),
   setMessage: (message) => set({ message }),
+  setPageTitle: (pageTitle) => set({ pageTitle }),
   reset: () => set({ status: 'idle', error: null, message: null }),
   
   // Convenience methods implementation

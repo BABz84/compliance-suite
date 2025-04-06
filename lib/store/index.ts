@@ -3,6 +3,7 @@ export * from './useUIState';
 export * from './useAuthStore';
 export * from './useDocumentStore';
 export * from './useAiStore';
+export * from './withStateManagement';
 
 // Re-export common types
 export type { UIStatus } from './useUIState';

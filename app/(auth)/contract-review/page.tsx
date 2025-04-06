@@ -13,10 +13,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useAiStore, useDocumentStore, useAuthStore } from "@/lib/store"
+import { useAiStore, useDocumentStore, useAuthStore, withStateManagement } from "@/lib/store"
 import { v4 as uuidv4 } from 'uuid'
 
-export default function ContractReviewPage() {
+function ContractReviewPage() {
   // Local state
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
@@ -635,4 +635,7 @@ export default function ContractReviewPage() {
       </Tabs>
     </div>
   )
-} 
+}
+
+// Export with state management HOC
+export default withStateManagement(ContractReviewPage) 

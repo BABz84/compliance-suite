@@ -11,10 +11,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { useAiStore, useDocumentStore, useAuthStore } from "@/lib/store"
+import { useAiStore, useDocumentStore, useAuthStore, withStateManagement } from "@/lib/store"
 import { v4 as uuidv4 } from 'uuid'
 
-export default function RegulatoryQAPage() {
+function RegulatoryQAPage() {
   // Input state
   const [query, setQuery] = useState("")
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([])
@@ -26,7 +26,7 @@ export default function RegulatoryQAPage() {
   const { user } = useAuthStore()
   
   // Access document store for context selection
-  const { documents, filteredDocuments, setDocumentTypeFilter } = useDocumentStore()
+  const { documents, filteredDocuments } = useDocumentStore()
   
   // Access AI store for interactions
   const { 
@@ -34,20 +34,8 @@ export default function RegulatoryQAPage() {
     addInteraction, 
     interactionStatus, 
     interactionError,
-    getInteractionsByFeature,
-    getFilteredInteractions, 
-    setFeatureFilter 
+    getFilteredInteractions
   } = useAiStore()
-  
-  // Set document filter to regulations
-  useEffect(() => {
-    setDocumentTypeFilter('regulation')
-  }, [setDocumentTypeFilter])
-  
-  // Filter interactions to show only regulatory Q&A
-  useEffect(() => {
-    setFeatureFilter('regulatory-qa')
-  }, [setFeatureFilter])
   
   // Get filtered Q&A history
   const qaHistory = getFilteredInteractions()
@@ -316,4 +304,7 @@ I recommend documenting your erasure process thoroughly, including verification 
       </Tabs>
     </div>
   )
-} 
+}
+
+// Export with state management HOC
+export default withStateManagement(RegulatoryQAPage)
