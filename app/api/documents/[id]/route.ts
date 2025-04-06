@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getUserFromRequest } from '@/lib/auth-helpers'
+import { updateDocumentSchema } from '@/lib/validation-schemas'
+import { handleApiError } from '@/lib/error-handling'
 
 export async function GET(
   request: NextRequest,
@@ -11,7 +13,7 @@ export async function GET(
     
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
+        { success: false, message: 'Unauthorized', code: 'UNAUTHORIZED' },
         { status: 401 }
       )
     }
@@ -34,7 +36,7 @@ export async function GET(
     
     if (!document) {
       return NextResponse.json(
-        { success: false, message: 'Document not found' },
+        { success: false, message: 'Document not found', code: 'NOT_FOUND' },
         { status: 404 }
       )
     }
@@ -45,18 +47,14 @@ export async function GET(
     
     if (!isAdminOrManager && !isOwner) {
       return NextResponse.json(
-        { success: false, message: 'Access denied' },
+        { success: false, message: 'Access denied', code: 'FORBIDDEN' },
         { status: 403 }
       )
     }
     
     return NextResponse.json({ success: true, document })
   } catch (error) {
-    console.error('Error fetching document:', error)
-    return NextResponse.json(
-      { success: false, message: 'Failed to fetch document' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }
 
@@ -69,13 +67,26 @@ export async function PATCH(
     
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
+        { success: false, message: 'Unauthorized', code: 'UNAUTHORIZED' },
         { status: 401 }
       )
     }
     
     const documentId = params.id
-    const { name, tags, jurisdiction } = await request.json()
+    const body = await request.json()
+    
+    // Validate input
+    const result = updateDocumentSchema.safeParse(body)
+    
+    if (!result.success) {
+      return NextResponse.json({
+        success: false,
+        message: 'Validation failed',
+        errors: result.error.errors
+      }, { status: 400 })
+    }
+    
+    const { name, tags, jurisdiction } = result.data
     
     const document = await prisma.document.findUnique({
       where: { id: documentId }
@@ -83,7 +94,7 @@ export async function PATCH(
     
     if (!document) {
       return NextResponse.json(
-        { success: false, message: 'Document not found' },
+        { success: false, message: 'Document not found', code: 'NOT_FOUND' },
         { status: 404 }
       )
     }
@@ -94,7 +105,7 @@ export async function PATCH(
     
     if (!isAdminOrManager && !isOwner) {
       return NextResponse.json(
-        { success: false, message: 'Access denied' },
+        { success: false, message: 'Access denied', code: 'FORBIDDEN' },
         { status: 403 }
       )
     }
@@ -114,11 +125,7 @@ export async function PATCH(
       document: updatedDocument
     })
   } catch (error) {
-    console.error('Error updating document:', error)
-    return NextResponse.json(
-      { success: false, message: 'Failed to update document' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }
 
@@ -131,7 +138,7 @@ export async function DELETE(
     
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
+        { success: false, message: 'Unauthorized', code: 'UNAUTHORIZED' },
         { status: 401 }
       )
     }
@@ -144,7 +151,7 @@ export async function DELETE(
     
     if (!document) {
       return NextResponse.json(
-        { success: false, message: 'Document not found' },
+        { success: false, message: 'Document not found', code: 'NOT_FOUND' },
         { status: 404 }
       )
     }
@@ -155,7 +162,7 @@ export async function DELETE(
     
     if (!isAdmin && !isOwner) {
       return NextResponse.json(
-        { success: false, message: 'Access denied' },
+        { success: false, message: 'Access denied', code: 'FORBIDDEN' },
         { status: 403 }
       )
     }
@@ -170,10 +177,6 @@ export async function DELETE(
       message: 'Document successfully deleted'
     })
   } catch (error) {
-    console.error('Error deleting document:', error)
-    return NextResponse.json(
-      { success: false, message: 'Failed to delete document' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 } 

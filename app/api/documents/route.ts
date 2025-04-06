@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getUserFromRequest } from '@/lib/auth-helpers'
 import { v4 as uuidv4 } from 'uuid'
+import { createDocumentSchema } from '@/lib/validation-schemas'
+import { handleApiError } from '@/lib/error-handling'
 
 // GET documents with optional filters
 export async function GET(request: NextRequest) {
@@ -10,7 +12,7 @@ export async function GET(request: NextRequest) {
     
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
+        { success: false, message: 'Unauthorized', code: 'UNAUTHORIZED' },
         { status: 401 }
       )
     }
@@ -43,11 +45,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({ success: true, documents })
   } catch (error) {
-    console.error('Error fetching documents:', error)
-    return NextResponse.json(
-      { success: false, message: 'Failed to fetch documents' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }
 
@@ -58,21 +56,27 @@ export async function POST(request: NextRequest) {
     
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
+        { success: false, message: 'Unauthorized', code: 'UNAUTHORIZED' },
         { status: 401 }
       )
     }
     
     // In a real implementation, this would handle file upload to cloud storage
     // For now, we'll mock the file upload process
-    const { name, type, jurisdiction, tags, fileSize, contentType } = await request.json()
+    const body = await request.json()
     
-    if (!name || !type) {
-      return NextResponse.json(
-        { success: false, message: 'Name and type are required' },
-        { status: 400 }
-      )
+    // Validate input
+    const result = createDocumentSchema.safeParse(body)
+    
+    if (!result.success) {
+      return NextResponse.json({
+        success: false,
+        message: 'Validation failed',
+        errors: result.error.errors
+      }, { status: 400 })
     }
+    
+    const { name, type, jurisdiction, tags, fileSize, contentType } = result.data
     
     // Create document in database
     const document = await prisma.document.create({
@@ -96,10 +100,6 @@ export async function POST(request: NextRequest) {
       document
     })
   } catch (error) {
-    console.error('Error creating document:', error)
-    return NextResponse.json(
-      { success: false, message: 'Failed to create document' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 } 

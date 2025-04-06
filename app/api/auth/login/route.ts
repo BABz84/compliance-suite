@@ -2,17 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import { compare } from 'bcrypt'
 import { sign } from 'jsonwebtoken'
 import { getUserByEmail, updateUserLastLogin } from '@/lib/db-helpers'
+import { loginSchema } from '@/lib/validation-schemas'
+import { handleApiError } from '@/lib/error-handling'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const body = await request.json()
     
-    if (!email || !password) {
+    // Validate input
+    const result = loginSchema.safeParse(body)
+    
+    if (!result.success) {
       return NextResponse.json(
-        { success: false, message: 'Email and password are required' },
+        { 
+          success: false, 
+          message: 'Validation failed', 
+          errors: result.error.errors 
+        },
         { status: 400 }
       )
     }
+    
+    const { email, password } = result.data
     
     const user = await getUserByEmail(email)
     
@@ -60,10 +71,7 @@ export async function POST(request: NextRequest) {
       token
     })
   } catch (error) {
-    console.error('Login error:', error)
-    return NextResponse.json(
-      { success: false, message: 'Authentication failed' },
-      { status: 500 }
-    )
+    // Use the centralized error handler
+    return handleApiError(error)
   }
 } 
