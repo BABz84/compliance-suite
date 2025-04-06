@@ -1,29 +1,35 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
+import "@/styles/globals.css"
+import { Inter as FontSans } from "next/font/google"
+import { cn } from "@/lib/utils"
+import { type Metadata } from "next"
+import { AppStateProvider } from "@/lib/store/AppStateProvider"
+import { StateSynchronizer } from "@/components/shared/StateSynchronizer"
+import { AuthWrapper } from "@/components/auth/AuthWrapper"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Sidebar } from "@/components/layout/sidebar"
-import { Header } from "@/components/layout/header"
 
-const inter = Inter({ subsets: ["latin"] })
+const fontSans = FontSans({ subsets: ["latin"], variable: "--font-sans" })
 
 export const metadata: Metadata = {
   title: "Gen-AI Compliance Suite",
-  description: "Enterprise-grade compliance solution for financial institutions",
-  generator: 'v0.dev'
+  description: "An enterprise compliance system powered by AI",
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          fontSans.variable
+        )}
+      >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          {children}
+          <AppStateProvider>
+            <StateSynchronizer />
+            <AuthWrapper>
+              {children}
+            </AuthWrapper>
+          </AppStateProvider>
         </ThemeProvider>
       </body>
     </html>
