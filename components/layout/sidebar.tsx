@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { useAuthStore } from "@/lib/store"
 
 const navItems = [
   { name: "Dashboard", href: "/", icon: BarChart3 },
@@ -35,6 +36,9 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const { logout, user } = useAuthStore()
+  
+  if (!user) return null;
 
   return (
     <div
@@ -90,6 +94,7 @@ export function Sidebar() {
             "w-full justify-start text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800",
             collapsed && "justify-center px-0",
           )}
+          onClick={logout}
         >
           <LogOut size={20} className={cn("flex-shrink-0", collapsed ? "" : "mr-3")} />
           {!collapsed && <span>Logout</span>}
