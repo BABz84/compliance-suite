@@ -15,8 +15,8 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   const { auth } = useAppState()
   const pathname = usePathname()
   
-  // Extract this for cleaner code
-  const isAuthenticated = auth?.isAuthenticated
+  // Extract this for cleaner code - use !! to safely check for existence and truthiness
+  const isAuthenticated = !!auth?.isAuthenticated
   
   // Define public routes that don't show the app shell
   const publicRoutes = ['/login', '/signup', '/forgot-password']
@@ -27,7 +27,9 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     return <AuthRouteGuard>{children}</AuthRouteGuard>
   }
   
-  // If authenticated, show app layout
+  // If authenticated (and not public), show app layout
+  // This is likely still causing duplication with app/(auth)/layout.tsx
+  // but we'll fix that next.
   return (
     <AuthRouteGuard>
       <div className="grid min-h-screen grid-cols-[auto_1fr]">
@@ -41,4 +43,4 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
       </div>
     </AuthRouteGuard>
   )
-} 
+}

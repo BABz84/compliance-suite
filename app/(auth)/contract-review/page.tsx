@@ -221,7 +221,28 @@ function ContractReviewPage() {
     }
   }
   
-  // Format date for history view
+  // Parse the analysis from JSON string or return if already object
+  const parseAnalysis = (data: any) => {
+    if (typeof data === 'object' && data !== null) {
+      return data; // Already an object
+    }
+    if (typeof data === 'string') {
+      try {
+        return JSON.parse(data)
+      } catch (e) {
+        console.error('Error parsing analysis JSON string:', e, 'Input:', data)
+        return null
+      }
+    }
+    console.warn('Invalid data type for parseAnalysis:', typeof data)
+    return null // Not an object or string
+  }
+  
+  // Get the latest analysis from context.analysisResult
+  const latestAnalysis = reviewHistory.length > 0 
+    ? parseAnalysis(reviewHistory[0].context?.analysisResult)
+    : null
+
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
@@ -231,21 +252,6 @@ function ContractReviewPage() {
       minute: 'numeric'
     }).format(date)
   }
-  
-  // Parse the analysis from JSON string
-  const parseAnalysis = (jsonString: string) => {
-    try {
-      return JSON.parse(jsonString)
-    } catch (e) {
-      console.error('Error parsing analysis JSON:', e)
-      return null
-    }
-  }
-  
-  // Get the latest analysis
-  const latestAnalysis = reviewHistory.length > 0 
-    ? parseAnalysis(reviewHistory[0].response)
-    : null
 
   return (
     <div className="space-y-6">
@@ -557,7 +563,7 @@ function ContractReviewPage() {
               ) : (
                 <div className="space-y-4">
                   {reviewHistory.map((review) => {
-                    const analysis = parseAnalysis(review.response)
+                    const analysis = parseAnalysis(review.context?.analysisResult) // Use context.analysisResult
                     if (!analysis) return null
                     
                     const contractName = review.context?.uploadedFileName || 

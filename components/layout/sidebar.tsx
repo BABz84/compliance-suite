@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useAppState } from "@/lib/store/AppStateProvider"
+import { useAppState, AppStateContextType } from "@/lib/store/AppStateProvider"
 import { 
   LayoutDashboard, 
   MessagesSquare, 
@@ -17,7 +17,8 @@ import {
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { auth: { hasPermission } } = useAppState()
+  const appState: AppStateContextType = useAppState()
+  const { auth: { hasPermission } } = appState
   
   // Define navigation links with permission requirements and icons
   const navLinks = [
@@ -65,4 +66,3 @@ export function Sidebar() {
     </div>
   )
 }
-

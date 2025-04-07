@@ -84,7 +84,7 @@ export const useAuthStore = create<AuthState>()(
           };
           
           // Update API client with token
-          apiClient.setToken(response.data.token);
+          apiClient.setAuthToken(response.data.token);
           
           set({ 
             isAuthenticated: true,
@@ -135,7 +135,7 @@ export const useAuthStore = create<AuthState>()(
           set({ authStatus: 'loading' });
           
           // Set the token in the API client
-          apiClient.setToken(token);
+          apiClient.setAuthToken(token);
           
           // Verify the session with the backend
           const response = await authApi.verifySession() as ApiResponse<{ user: User }>;
